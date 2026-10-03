@@ -1,2 +1,2 @@
-# vanad
-terminal app that runs in your browser
+# Vanad
+A terminal app that runs in your browser.

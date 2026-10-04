@@ -13,6 +13,14 @@ function handleCmd(value) {
     }
 }
 
+console.addEventListener('click', () => {
+    const input = document.getElementById('input');
+
+    if (input) {
+        input.focus();
+    }
+});
+
 async function promptForCommand() {
     log(`>> `);
     log(`<x id="input" contenteditable="true" autofocus></x><br/>`);

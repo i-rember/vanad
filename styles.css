@@ -1,13 +1,16 @@
 :root {
 	color-scheme: dark;
 	--background: #111318;
-	--surface: #1b1e26;
-	--surface-raised: #252a35;
 	--text: #e7e9ee;
-	--text-muted: #a1a8b5;
-	--border: #353a46;
-	--accent: #00000000;
+	--accent: #0000;
+    --primary: #ffe058;
+    --secondary: #58d0ff;
+    --tertiary: #ff58b4;
 }
+
+primary {color: var(--primary);}
+secondary {color: var(--secondary);}
+tertiary {color: var(--tertiary);}
 
 html,
 body {
@@ -23,7 +26,7 @@ body {
 }
 
 a {
-	color: var(--accent);
+	color: var(--secondary);
 }
 
 button,

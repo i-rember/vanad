@@ -1,59 +1,176 @@
-const console = document.getElementById('console');
+let terminal = document.getElementById('console');
+
+function ensureTerminal() {
+    if (!terminal) {
+        terminal = document.getElementById('console');
+    }
+
+    if (!terminal && document.body) {
+        terminal = document.createElement('div');
+        terminal.id = 'console';
+        document.body.appendChild(terminal);
+    }
+
+    return terminal;
+}
 
 function log(html) {
-	console.innerHTML += html;
-}
+    const element = ensureTerminal();
 
-log(`-= Vanad Terminal ver. 0.1.0 =-<br/>`);
-log(`Type 'help' or '?' for a list of available commands.<br/><br/>`);
-
-function handleCmd(value) {
-    if (value) {
-        log(`${value}`);
+    if (element) {
+        element.insertAdjacentHTML('beforeend', html);
     }
 }
 
-console.addEventListener('click', () => {
-    const input = document.getElementById('input');
+const commands = {
+    help: {
+        desc: "Show information about commands",
+        params: [
+            {
+                name: "command",
+                desc: "Command to look up"
+            }
+        ],
+        run: (cmd = null) => {
+            function formatCommand(command, name) {
+                if (command.params) {
+                    const params = command.params.map(({ name }) => `&lt;${name}&gt;`).join(' ');
+                    return `<primary>${name}</primary> <secondary>${params}</secondary> - ${command.desc}`;
+                } else {
+                    return `<primary>${name}</primary> - ${command.desc}`;
+                }
+            }
 
-    if (input) {
-        input.focus();
-    }
-});
+            if (cmd) {
+                const command = commands[cmd];
 
-async function promptForCommand() {
-    log(`>> `);
-    log(`<x id="input" contenteditable="true" autofocus></x><br/>`);
-
-    const input = document.getElementById('input');
-
-    await new Promise((resolve) => {
-        const handleKeydown = (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-
-                input.contentEditable = false;
-                input.id = null;
-
-                const value = input.textContent.trim();
-
-                if (value) {
-                    handleCmd(value)
-                    log(`<br/>`)
+                if (!command) {
+                    log(`<tertiary>${cmd} is not a command</tertiary>`);
+                    return;
                 }
 
-                input.removeEventListener('keydown', handleKeydown);
-                input.remove();
-                resolve();
+                log(formatCommand(command, cmd));
+                if (command.params) {
+                    command.params.forEach(({ name, desc }) => log(`<br/>  <secondary>${name}</secondary>: ${desc}`));
+                }
+                return;
             }
-        };
 
-        input.addEventListener('keydown', handleKeydown);
-    });
+            log("Available commands:")
+            Object.entries(commands).forEach(([name, command]) => {
+                log(`<br/>  ` + formatCommand(command, name));
+            });
+        }
+    },
+    echo: {
+        desc: "Display a message",
+        params: [
+            {
+                name: "message",
+                desc: "Message to display"
+            }
+        ],
+        run: (...params) => {
+            const message = params.join(' ');
+            log(`${message || ' '}`);
+        }
+    },
+    crash: {
+        desc: "Trigger a terminal error",
+        run: () => {
+            throw new Error('Terminal crash requested');
+        }
+    }
+};
+
+function handleCmd(value) {
+    const args = value.match(/"[^"]*"|'[^']*'|[^\s]+/g)?.map((arg) => arg.replace(/^['"]|['"]$/g, '')) ?? [];
+    const [name, ...params] = args;
+
+    if (!name) {
+        return;
+    }
+
+    const command = commands[name];
+
+    if (!command) {
+        log(`<tertiary>${name} is not a command</tertiary>`);
+        return;
+    }
+
+    command.run(...params);
 }
 
-(async () => {
-    while (true) {
-        await promptForCommand();
+function start() {
+    ensureTerminal();
+
+    log(`-= Vanad Terminal ver. 0.1.0 =-<br/>`);
+    log(`Type 'help' for a list of available commands.<br/><br/>`);
+
+    document.addEventListener('click', () => {
+        const input = document.getElementById('input');
+
+        if (input) {
+            input.focus();
+        }
+    });
+
+    async function promptForCommand() {
+        log(`>> `);
+        log(`<x id="input" contenteditable="true" spellcheck="false"></x><br/>`);
+
+        const input = document.getElementById('input');
+
+        if (!input) {
+            return;
+        }
+
+        input.focus();
+
+        await new Promise((resolve, reject) => {
+            const handleKeydown = (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+
+                    input.contentEditable = false;
+                    input.id = null;
+
+                    const value = input.textContent.trim();
+
+                    try {
+                        if (value) {
+                            handleCmd(value);
+                            log(`<br/>`);
+                        }
+
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    } finally {
+                        input.removeEventListener('keydown', handleKeydown);
+                    }
+                }
+            };
+
+            input.addEventListener('keydown', handleKeydown);
+        });
     }
-})();
+
+    (async () => {
+        while (true) {
+            try {
+                await promptForCommand();
+            } catch (e) {
+                log(`<tertiary>AN UNCAUGHT ERROR HAS OCCURRED</tertiary><br/>${e}<br/>please refresh the page`);
+                console.error(e);
+                break;
+            }
+        }
+    })();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+} else {
+    start();
+}

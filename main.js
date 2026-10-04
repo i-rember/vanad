@@ -35,7 +35,7 @@ function safeText(value) {
     const allowedTags = ['primary', 'secondary', 'tertiary'];
     const replacements = [];
     const protectedValue = String(value).replace(/<\/?(primary|secondary|tertiary)>/gi, (match) => {
-        const token = `__VANAD_ALLOWED_TAG_${replacements.length}__`;
+        const token = `__VANADE_ALLOWED_TAG_${replacements.length}__`;
         replacements.push(match);
         return token;
     });
@@ -43,7 +43,7 @@ function safeText(value) {
     const escaped = escapeHtml(protectedValue);
 
     return allowedTags.reduce((result, _, index) => {
-        const token = `__VANAD_ALLOWED_TAG_${index}__`;
+        const token = `__VANADE_ALLOWED_TAG_${index}__`;
         if (replacements[index]) {
             return result.replace(token, replacements[index]);
         }
@@ -150,12 +150,12 @@ const commands = {
         }
     },
     about: {
-        desc: "Show information about Vanad",
+        desc: "Show information about Vanade",
         run: () => {
-            log(`-= Vanad Terminal ver. ${VERSION} =-<br/>`);
+            log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
             log(`A terminal app that runs in your browser<br/><br/>`);
             log(`Copyright (c) 2026 i rember; MIT License<br/>`);
-            log(`<a href="https://github.com/i-rember/vanad">This app is open-source</a>`);
+            log(`<a href="https://github.com/i-rember/vanade">This app is open-source</a>`);
         }
     },
     random: {
@@ -194,7 +194,7 @@ function handleCmd(value) {
 function start() {
     ensureTerminal();
 
-    log(`-= Vanad Terminal ver. ${VERSION} =-<br/>`);
+    log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
     log(`Type 'help' for a list of available commands.<br/><br/>`);
 
     document.addEventListener('click', () => {

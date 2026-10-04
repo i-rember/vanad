@@ -1,3 +1,5 @@
+const VERSION = "0.1.0";
+
 let terminal = document.getElementById('console');
 
 function ensureTerminal() {
@@ -63,14 +65,18 @@ const commands = {
         params: [
             {
                 name: "command",
-                desc: "Command to look up"
+                desc: "Command to look up",
+                optional: true
             }
         ],
         run: (cmd = null) => {
             function formatCommand(command, name) {
                 if (command.params) {
-                    const params = command.params.map(({ name }) => `&lt;${escapeHtml(name)}&gt;`).join(' ');
-                    return `<primary>${escapeHtml(name)}</primary> <secondary>${params}</secondary> - ${escapeHtml(command.desc)}`;
+                    const params = command.params.map((param) => 
+                        param.optional ? `[${escapeHtml(param.name)}]` : `&lt;${escapeHtml(param.name)}&gt;`
+                    ).join(' ');
+                    return `<primary>${escapeHtml(name)}</primary> <secondary>${params}</secondary> - ` +
+                        `${escapeHtml(command.desc)}`;
                 } else {
                     return `<primary>${escapeHtml(name)}</primary> - ${escapeHtml(command.desc)}`;
                 }
@@ -80,25 +86,37 @@ const commands = {
                 const command = commands[cmd];
 
                 if (!command) {
-                    log(`<tertiary>${escapeHtml(cmd)}</tertiary> is not a command`);
+                    log(`<tertiary>${escapeHtml(cmd)} is not a command</tertiary>`);
                     return;
                 }
 
                 log(formatCommand(command, cmd));
+                if (command.details) {
+                    log(`<br/>  ${command.details}`)
+                }
                 if (command.params) {
-                    command.params.forEach(({ name, desc }) => log(`<br/>  <secondary>${escapeHtml(name)}</secondary>: ${escapeHtml(desc)}`));
+                    command.params.forEach((param) => {
+                        log(`<br/>    <secondary>${escapeHtml(param.name)}</secondary>: ${escapeHtml(param.desc)}`);
+                        if (param.optional) {
+                            log(` (optional)`)
+                        }
+                    });
                 }
                 return;
             }
 
             log("Available commands:")
-            Object.entries(commands).forEach(([name, command]) => {
-                log(`<br/>  ` + formatCommand(command, name));
-            });
+            Object.entries(commands)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .forEach(([name, command]) => {
+                    log(`<br/>  ` + formatCommand(command, name));
+                });
         }
     },
     echo: {
         desc: "Display a message",
+        details: "Allows for <primary>&lt;primary&gt;</primary>, <secondary>&lt;secondary&gt;</secondary>, " +
+            "and <tertiary>&lt;tertiary&gt;</tertiary> color tags.",
         params: [
             {
                 name: "message",
@@ -110,10 +128,47 @@ const commands = {
             textlog(`${message || ' '}`);
         }
     },
-    crash: {
-        desc: "Trigger a terminal error",
+    clear: {
+        desc: "Clear the terminal output",
         run: () => {
-            throw new Error('Terminal crash requested');
+            const terminal = document.getElementById('console');
+            if (terminal) {
+                terminal.innerHTML = "";
+            }
+        }
+    },
+    date: {
+        desc: "Display the current date",
+        run: () => {
+            log(`Today is ${new Date().toDateString()}`);
+        }
+    },
+    time: {
+        desc: "Display the current time",
+        run: () => {
+            log(`It's currently ${new Date().toTimeString()}`);
+        }
+    },
+    about: {
+        desc: "Show information about Vanad",
+        run: () => {
+            log(`-= Vanad Terminal ver. ${VERSION} =-<br/>`);
+            log(`A terminal app that runs in your browser<br/><br/>`);
+            log(`Copyright (c) 2026 i rember; MIT License<br/>`);
+            log(`<a href="https://github.com/i-rember/vanad">This app is open-source</a>`);
+        }
+    },
+    random: {
+        desc: "Generate a random number between two values",
+        params: [
+            { name: "min", desc: "Minimum value" },
+            { name: "max", desc: "Maximum value" }
+        ],
+        run: (min = 0, max = 100) => {
+            const a = Number(min);
+            const b = Number(max);
+            const value = Math.floor(Math.random() * (b - a + 1)) + a;
+            log(String(value));
         }
     }
 };
@@ -129,7 +184,7 @@ function handleCmd(value) {
     const command = commands[name];
 
     if (!command) {
-        log(`<tertiary>${escapeHtml(name)}</tertiary> is not a command`);
+        log(`<tertiary>${escapeHtml(name)} is not a command</tertiary>`);
         return;
     }
 
@@ -139,7 +194,7 @@ function handleCmd(value) {
 function start() {
     ensureTerminal();
 
-    log(`-= Vanad Terminal ver. 0.1.0 =-<br/>`);
+    log(`-= Vanad Terminal ver. ${VERSION} =-<br/>`);
     log(`Type 'help' for a list of available commands.<br/><br/>`);
 
     document.addEventListener('click', () => {

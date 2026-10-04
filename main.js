@@ -22,6 +22,41 @@ function log(html) {
     }
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function safeText(value) {
+    const allowedTags = ['primary', 'secondary', 'tertiary'];
+    const replacements = [];
+    const protectedValue = String(value).replace(/<\/?(primary|secondary|tertiary)>/gi, (match) => {
+        const token = `__VANAD_ALLOWED_TAG_${replacements.length}__`;
+        replacements.push(match);
+        return token;
+    });
+
+    const escaped = escapeHtml(protectedValue);
+
+    return allowedTags.reduce((result, _, index) => {
+        const token = `__VANAD_ALLOWED_TAG_${index}__`;
+        if (replacements[index]) {
+            return result.replace(token, replacements[index]);
+        }
+        return result;
+    }, escaped);
+}
+
+function textlog(text) {
+    const element = ensureTerminal();
+
+    if (element) {
+        element.insertAdjacentHTML('beforeend', safeText(text));
+    }
+}
+
 const commands = {
     help: {
         desc: "Show information about commands",
@@ -34,10 +69,10 @@ const commands = {
         run: (cmd = null) => {
             function formatCommand(command, name) {
                 if (command.params) {
-                    const params = command.params.map(({ name }) => `&lt;${name}&gt;`).join(' ');
-                    return `<primary>${name}</primary> <secondary>${params}</secondary> - ${command.desc}`;
+                    const params = command.params.map(({ name }) => `&lt;${escapeHtml(name)}&gt;`).join(' ');
+                    return `<primary>${escapeHtml(name)}</primary> <secondary>${params}</secondary> - ${escapeHtml(command.desc)}`;
                 } else {
-                    return `<primary>${name}</primary> - ${command.desc}`;
+                    return `<primary>${escapeHtml(name)}</primary> - ${escapeHtml(command.desc)}`;
                 }
             }
 
@@ -45,13 +80,13 @@ const commands = {
                 const command = commands[cmd];
 
                 if (!command) {
-                    log(`<tertiary>${cmd} is not a command</tertiary>`);
+                    log(`<tertiary>${escapeHtml(cmd)}</tertiary> is not a command`);
                     return;
                 }
 
                 log(formatCommand(command, cmd));
                 if (command.params) {
-                    command.params.forEach(({ name, desc }) => log(`<br/>  <secondary>${name}</secondary>: ${desc}`));
+                    command.params.forEach(({ name, desc }) => log(`<br/>  <secondary>${escapeHtml(name)}</secondary>: ${escapeHtml(desc)}`));
                 }
                 return;
             }
@@ -72,7 +107,7 @@ const commands = {
         ],
         run: (...params) => {
             const message = params.join(' ');
-            log(`${message || ' '}`);
+            textlog(`${message || ' '}`);
         }
     },
     crash: {
@@ -94,7 +129,7 @@ function handleCmd(value) {
     const command = commands[name];
 
     if (!command) {
-        log(`<tertiary>${name} is not a command</tertiary>`);
+        log(`<tertiary>${escapeHtml(name)}</tertiary> is not a command`);
         return;
     }
 

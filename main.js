@@ -9,7 +9,7 @@ log(`Type 'help' or '?' for a list of available commands.<br/><br/>`);
 
 function handleCmd(value) {
     if (value) {
-        log(`${value}<br/>`);
+        log(`${value}`);
     }
 }
 
@@ -31,6 +31,7 @@ async function promptForCommand() {
 
                 if (value) {
                     handleCmd(value)
+                    log(`<br/>`)
                 }
 
                 input.removeEventListener('keydown', handleKeydown);

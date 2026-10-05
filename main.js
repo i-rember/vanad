@@ -1,6 +1,6 @@
 const VERSION = "0.1.0";
 
-let terminal = document.getElementById('console');
+let terminal = null;
 
 function ensureTerminal() {
     if (!terminal) {
@@ -16,12 +16,12 @@ function ensureTerminal() {
     return terminal;
 }
 
-function log(html) {
-    const element = ensureTerminal();
+ensureTerminal();
 
-    if (element) {
-        element.insertAdjacentHTML('beforeend', html);
-    }
+function log(html) {
+    ensureTerminal();
+
+    terminal.insertAdjacentHTML('beforeend', html);
 }
 
 function escapeHtml(value) {
@@ -52,11 +52,9 @@ function safeText(value) {
 }
 
 function textlog(text) {
-    const element = ensureTerminal();
+    ensureTerminal();
 
-    if (element) {
-        element.insertAdjacentHTML('beforeend', safeText(text));
-    }
+    terminal.insertAdjacentHTML('beforeend', safeText(text));
 }
 
 const commands = {
@@ -167,6 +165,10 @@ const commands = {
         run: (min = 0, max = 100) => {
             const a = Number(min);
             const b = Number(max);
+            if (isNaN(a) || isNaN(b)) {
+                log(`<tertiary>Please provide valid numeric values</tertiary>`);
+                return;
+            }
             const value = Math.floor(Math.random() * (b - a + 1)) + a;
             log(String(value));
         }
@@ -197,7 +199,7 @@ function start() {
     log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
     log(`Type 'help' for a list of available commands.<br/><br/>`);
 
-    document.addEventListener('click', () => {
+    terminal.addEventListener('click', () => {
         const input = document.getElementById('input');
 
         if (input) {
@@ -251,9 +253,8 @@ function start() {
             try {
                 await promptForCommand();
             } catch (e) {
-                log(`<tertiary>AN UNCAUGHT ERROR HAS OCCURRED</tertiary><br/>${e}<br/>please refresh the page`);
+                log(`<tertiary>Uncaught ${escapeHtml(String(e))}</tertiary><br/>`);
                 console.error(e);
-                break;
             }
         }
     })();

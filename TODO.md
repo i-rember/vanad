@@ -1,5 +1,5 @@
 Architecture improvements:
-- [ ] Separate output from prompt
+- [X] Separate output from prompt
 - [ ] Make commands asynchronous
 - [ ] Create a proper output API
 

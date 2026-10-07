@@ -1,4 +1,4 @@
-const VERSION = "0.2.1";
+const VERSION = "0.2.1.1";
 
 let terminal = null;
 let inputPrompt = null;
@@ -29,22 +29,22 @@ function escapeHtml(value) {
 }
 
 function safeText(value) {
-    const allowedTags = ['primary', 'secondary', 'tertiary'];
     const replacements = [];
-    const protectedValue = String(value).replace(/<\/?(primary|secondary|tertiary)>/gi, (match) => {
-        const token = `__VANADE_ALLOWED_TAG_${replacements.length}__`;
-        replacements.push(match);
-        return token;
-    });
+
+    const protectedValue = String(value).replace(
+        /<\/?(primary|secondary|tertiary)>/gi,
+        (match) => {
+            const token = `__FORMAT_TAG_${replacements.length}__`;
+            replacements.push(match);
+            return token;
+        }
+    );
 
     const escaped = escapeHtml(protectedValue);
 
-    return allowedTags.reduce((result, _, index) => {
-        const token = `__VANADE_ALLOWED_TAG_${index}__`;
-        if (replacements[index]) {
-            return result.replace(token, replacements[index]);
-        }
-        return result;
+    return replacements.reduce((result, replacement, index) => {
+        const token = `__FORMAT_TAG_${index}__`;
+        return result.replace(token, replacement);
     }, escaped);
 }
 

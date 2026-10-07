@@ -1,3 +1,6 @@
+Bugs:
+- [X] Fix echo parsing issue
+
 Architecture improvements:
 - [X] Separate output from prompt
 - [ ] Make commands asynchronous

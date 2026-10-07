@@ -1,4 +1,4 @@
-const VERSION = "0.2.2.1";
+const VERSION = "0.2.2.2";
 
 let terminal = null;
 let inputPrompt = null;
@@ -252,6 +252,21 @@ function start() {
                     } finally {
                         inputPrompt.removeEventListener('keydown', handleKeydown);
                     }
+                }
+
+                if (event.key === 'Tab') {
+                    event.preventDefault();
+
+                    const commandToken = inputPrompt.value.trimStart().split(/\s+/)[0] ?? '';
+                    const matches = Object.keys(commands)
+                        .filter((name) => name.startsWith(commandToken))
+                        .sort((a, b) => a.localeCompare(b));
+
+                    if (matches.length != 1) {
+                        return;
+                    }
+
+                    inputPrompt.value = matches[0];
                 }
             };
 

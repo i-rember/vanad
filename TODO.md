@@ -8,7 +8,8 @@ Architecture improvements:
 
 Stylistic improvements:
 - [X] Implement command history
-- [ ] Add tab completion for commands
+- [X] Add tab completion for commands
 - [ ] Add keyboard shortcuts
 - [ ] Auto-scroll output
 - [ ] Improve prompt?
+- [ ] Improve tab completion

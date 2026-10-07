@@ -24,14 +24,14 @@ function escapeHtml(value) {
 }
 
 function safeText(value) {
+    const text = String(value);
     const regex = /\\([<>])|<\/?(primary|secondary|tertiary)>/gi;
+
     let result = '';
     let lastIndex = 0;
 
-    for (const match of String(value).matchAll(regex)) {
-        result += escapeHtml(
-            String(value).slice(lastIndex, match.index)
-        );
+    for (const match of text.matchAll(regex)) {
+        result += escapeHtml(text.slice(lastIndex, match.index));
 
         if (match[1]) {
             result += escapeHtml(match[1]);
@@ -42,7 +42,7 @@ function safeText(value) {
         lastIndex = match.index + match[0].length;
     }
 
-    result += escapeHtml(String(value).slice(lastIndex));
+    result += escapeHtml(text.slice(lastIndex));
 
     return result;
 }

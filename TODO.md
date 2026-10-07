@@ -7,8 +7,8 @@ Architecture improvements:
 - [X] Create a proper output API
 
 Stylistic improvements:
-- [ ] Command history and recalling with up/down arrows
-- [ ] Tab completion for commands
-- [ ] Keyboard shortcuts
-- [ ] Auto-scrolling output
-- [ ] Better prompt?
+- [ ] Implement command history and recalling with up/down arrows
+- [ ] Add tab completion for commands
+- [ ] Add keyboard shortcuts
+- [ ] Auto-scroll output
+- [ ] Improve prompt?

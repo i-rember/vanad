@@ -1,4 +1,4 @@
-const VERSION = "0.2.2";
+const VERSION = "0.2.2.1";
 
 let terminal = null;
 let inputPrompt = null;
@@ -50,7 +50,6 @@ function safeText(value) {
 const output = {
     raw: (html) => {
         ensureTerminal();
-        console.log('RAW INPUT:', JSON.stringify(html));
         terminal.insertAdjacentHTML('beforeend', html);
     },
     print: (text, color=null) => {
@@ -183,6 +182,9 @@ const commands = {
     }
 };
 
+let commandHistory = [];
+let historyIndex = 0;
+
 function handleCmd(value) {
     const args = value.match(/"[^"]*"|'[^']*'|[^\s]+/g)?.map((arg) => arg.replace(/^['"]|['"]$/g, '')) ?? [];
     const [name, ...params] = args;
@@ -190,6 +192,9 @@ function handleCmd(value) {
     if (!name) {
         return;
     }
+
+    commandHistory.push(value);
+    historyIndex = commandHistory.length;
 
     const command = commands[name];
 
@@ -212,6 +217,19 @@ function start() {
 
         await new Promise((resolve, reject) => {
             const handleKeydown = (event) => {
+                if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                    event.preventDefault();
+
+                    if (event.key === 'ArrowUp' && historyIndex > 0) {
+                        historyIndex--;
+                        inputPrompt.value = commandHistory[historyIndex];
+                    } else if (event.key === 'ArrowDown' && historyIndex < commandHistory.length) {
+                        historyIndex++;
+                        inputPrompt.value = commandHistory[historyIndex] ?? '';
+                    }
+                    return;
+                }
+
                 if (event.key === 'Enter') {
                     event.preventDefault();
 

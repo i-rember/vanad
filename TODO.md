@@ -7,7 +7,7 @@ Architecture improvements:
 - [X] Create a proper output API
 
 Stylistic improvements:
-- [ ] Implement command history and recalling with up/down arrows
+- [X] Implement command history
 - [ ] Add tab completion for commands
 - [ ] Add keyboard shortcuts
 - [ ] Auto-scroll output

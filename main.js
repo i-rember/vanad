@@ -1,4 +1,4 @@
-const VERSION = "0.2.1.2";
+const VERSION = "0.2.2";
 
 let terminal = null;
 let inputPrompt = null;
@@ -15,43 +15,54 @@ function ensureTerminal() {
 
 ensureTerminal();
 
-function log(html) {
-    ensureTerminal();
-
-    terminal.insertAdjacentHTML('beforeend', html);
-}
-
 function escapeHtml(value) {
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br/>');
 }
 
 function safeText(value) {
-    const replacements = [];
+    const regex = /\\([<>])|<\/?(primary|secondary|tertiary)>/gi;
+    let result = '';
+    let lastIndex = 0;
 
-    const protectedValue = String(value).replace(
-        /<\/?(primary|secondary|tertiary)>/gi,
-        (match) => {
-            const token = `__FORMAT_TAG_${replacements.length}__`;
-            replacements.push(match);
-            return token;
+    for (const match of String(value).matchAll(regex)) {
+        result += escapeHtml(
+            String(value).slice(lastIndex, match.index)
+        );
+
+        if (match[1]) {
+            result += escapeHtml(match[1]);
+        } else {
+            result += match[0];
         }
-    );
 
-    const escaped = escapeHtml(protectedValue);
+        lastIndex = match.index + match[0].length;
+    }
 
-    return replacements.reduce((result, replacement, index) => {
-        const token = `__FORMAT_TAG_${index}__`;
-        return result.replace(token, replacement);
-    }, escaped);
+    result += escapeHtml(String(value).slice(lastIndex));
+
+    return result;
 }
 
-function textlog(text) {
-    ensureTerminal();
-
-    terminal.insertAdjacentHTML('beforeend', safeText(text));
+const output = {
+    raw: (html) => {
+        ensureTerminal();
+        console.log('RAW INPUT:', JSON.stringify(html));
+        terminal.insertAdjacentHTML('beforeend', html);
+    },
+    print: (text, color=null) => {
+        if (color) {
+            output.raw(`<${color}>${escapeHtml(text)}</${color}>`);
+        } else {
+            output.raw(escapeHtml(text));
+        }
+    },
+    format: (text) => {
+        output.raw(safeText(text));
+    }
 }
 
 const commands = {
@@ -68,12 +79,11 @@ const commands = {
             function formatCommand(command, name) {
                 if (command.params) {
                     const params = command.params.map((param) => 
-                        param.optional ? `[${escapeHtml(param.name)}]` : `&lt;${escapeHtml(param.name)}&gt;`
+                        param.optional ? `[${param.name}]` : `\\<${param.name}\\>`
                     ).join(' ');
-                    return `<primary>${escapeHtml(name)}</primary> <secondary>${params}</secondary> - ` +
-                        `${escapeHtml(command.desc)}`;
+                    return `<primary>${name}</primary> <secondary>${params}</secondary> - ${command.desc}`;
                 } else {
-                    return `<primary>${escapeHtml(name)}</primary> - ${escapeHtml(command.desc)}`;
+                    return `<primary>${name}</primary> - ${command.desc}`;
                 }
             }
 
@@ -81,37 +91,38 @@ const commands = {
                 const command = commands[cmd];
 
                 if (!command) {
-                    log(`<tertiary>${escapeHtml(cmd)} is not a command</tertiary>`);
+                    output.print(`${cmd} is not a command`, 'tertiary');
                     return;
                 }
 
-                log(formatCommand(command, cmd));
+                output.format(formatCommand(command, cmd));
                 if (command.details) {
-                    log(`<br/>  ${command.details}`)
+                    output.format(`\n  ${command.details}`)
                 }
                 if (command.params) {
                     command.params.forEach((param) => {
-                        log(`<br/>    <secondary>${escapeHtml(param.name)}</secondary>: ${escapeHtml(param.desc)}`);
+                        output.format(`\n    <secondary>${param.name}</secondary>: ${param.desc}`);
                         if (param.optional) {
-                            log(` (optional)`)
+                            output.print(` (optional)`)
                         }
                     });
                 }
                 return;
             }
 
-            log("Available commands:")
+            output.print("Available commands:")
             Object.entries(commands)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .forEach(([name, command]) => {
-                    log(`<br/>  ` + formatCommand(command, name));
+                    output.print(`\n  `);
+                    output.format(formatCommand(command, name))
                 });
         }
     },
     echo: {
         desc: "Display a message",
-        details: "Allows for <primary>&lt;primary&gt;</primary>, <secondary>&lt;secondary&gt;</secondary>, " +
-            "and <tertiary>&lt;tertiary&gt;</tertiary> color tags.",
+        details: "Allows for <primary>\\<primary></primary>, <secondary>\\<secondary></secondary>, " +
+            "and <tertiary>\\<tertiary></tertiary> color tags.",
         params: [
             {
                 name: "message",
@@ -120,7 +131,7 @@ const commands = {
         ],
         run: async (...params) => {
             const message = params.join(' ');
-            textlog(`${message || ' '}`);
+            output.format(`${message || ' '}`);
         }
     },
     clear: {
@@ -135,22 +146,22 @@ const commands = {
     date: {
         desc: "Display the current date",
         run: async () => {
-            log(`Today is ${new Date().toDateString()}`);
+            output.print(new Date().toDateString());
         }
     },
     time: {
         desc: "Display the current time",
         run: async () => {
-            log(`It's currently ${new Date().toTimeString()}`);
+            output.print(new Date().toTimeString());
         }
     },
     about: {
         desc: "Show information about Vanade",
         run: async () => {
-            log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
-            log(`A terminal app that runs in your browser<br/><br/>`);
-            log(`Copyright (c) 2026 i rember; MIT License<br/>`);
-            log(`<a href="https://github.com/i-rember/vanade">This app is open-source</a>`);
+            output.print(`-= Vanade Terminal ver. ${VERSION} =-\n`);
+            output.print(`A terminal app that runs in your browser\n\n`);
+            output.print(`Copyright (c) 2026 i rember; MIT License\n`);
+            output.raw(`<a href="https://github.com/i-rember/vanade">This app is open-source</a>`);
         }
     },
     random: {
@@ -163,11 +174,11 @@ const commands = {
             const a = Number(min);
             const b = Number(max);
             if (isNaN(a) || isNaN(b)) {
-                log(`<tertiary>Please provide valid numeric values</tertiary>`);
+                output.print(`Please provide valid numeric values`, 'tertiary');
                 return;
             }
             const value = Math.floor(Math.random() * (b - a + 1)) + a;
-            log(String(value));
+            output.print(String(value));
         }
     }
 };
@@ -183,7 +194,7 @@ function handleCmd(value) {
     const command = commands[name];
 
     if (!command) {
-        log(`<tertiary>${escapeHtml(name)} is not a command</tertiary>`);
+        output.print(`${name} is not a command`, 'tertiary');
         return;
     }
 
@@ -193,8 +204,8 @@ function handleCmd(value) {
 function start() {
     ensureTerminal();
 
-    log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
-    log(`Type 'help' for a list of available commands.<br/><br/>`);
+    output.print(`-= Vanade Terminal ver. ${VERSION} =-\n`);
+    output.print(`Type 'help' for a list of available commands.\n\n`);
 
     async function promptForCommand() {
         inputPrompt.focus();
@@ -204,8 +215,8 @@ function start() {
                 if (event.key === 'Enter') {
                     event.preventDefault();
 
-                    log(document.getElementById('preprompt').textContent)
-                    log(escapeHtml(inputPrompt.value) + `<br/>`)
+                    output.print(document.getElementById('preprompt').textContent)
+                    output.print(inputPrompt.value + `\n`)
                     
                     const value = inputPrompt.value.trim();
 
@@ -214,7 +225,7 @@ function start() {
                     try {
                         if (value) {
                             handleCmd(value);
-                            log(`<br/>`);
+                            output.print(`\n`);
                         }
 
                         resolve();
@@ -235,7 +246,8 @@ function start() {
             try {
                 await promptForCommand();
             } catch (e) {
-                log(`<tertiary>Uncaught ${escapeHtml(String(e))}</tertiary><br/>`);
+                output.print(`Uncaught ${String(e)}`, 'tertiary');
+                output.print(`\n`);
                 console.error(e);
             }
         }

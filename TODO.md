@@ -3,7 +3,7 @@ Bugs:
 
 Architecture improvements:
 - [X] Separate output from prompt
-- [ ] Make commands asynchronous
+- [X] Make commands asynchronous
 - [ ] Create a proper output API
 
 Stylistic improvements:

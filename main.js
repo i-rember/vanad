@@ -1,4 +1,4 @@
-const VERSION = "0.2.1.1";
+const VERSION = "0.2.1.2";
 
 let terminal = null;
 let inputPrompt = null;
@@ -64,7 +64,7 @@ const commands = {
                 optional: true
             }
         ],
-        run: (cmd = null) => {
+        run: async (cmd = null) => {
             function formatCommand(command, name) {
                 if (command.params) {
                     const params = command.params.map((param) => 
@@ -118,14 +118,14 @@ const commands = {
                 desc: "Message to display"
             }
         ],
-        run: (...params) => {
+        run: async (...params) => {
             const message = params.join(' ');
             textlog(`${message || ' '}`);
         }
     },
     clear: {
         desc: "Clear the terminal output",
-        run: () => {
+        run: async () => {
             const terminal = document.getElementById('console');
             if (terminal) {
                 terminal.innerHTML = "";
@@ -134,19 +134,19 @@ const commands = {
     },
     date: {
         desc: "Display the current date",
-        run: () => {
+        run: async () => {
             log(`Today is ${new Date().toDateString()}`);
         }
     },
     time: {
         desc: "Display the current time",
-        run: () => {
+        run: async () => {
             log(`It's currently ${new Date().toTimeString()}`);
         }
     },
     about: {
         desc: "Show information about Vanade",
-        run: () => {
+        run: async () => {
             log(`-= Vanade Terminal ver. ${VERSION} =-<br/>`);
             log(`A terminal app that runs in your browser<br/><br/>`);
             log(`Copyright (c) 2026 i rember; MIT License<br/>`);
@@ -159,7 +159,7 @@ const commands = {
             { name: "min", desc: "Minimum value" },
             { name: "max", desc: "Maximum value" }
         ],
-        run: (min = 0, max = 100) => {
+        run: async (min = 0, max = 100) => {
             const a = Number(min);
             const b = Number(max);
             if (isNaN(a) || isNaN(b)) {

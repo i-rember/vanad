@@ -1,4 +1,4 @@
-const VERSION = "0.2.2.2";
+const VERSION = "0.2.2.2.2";
 
 let terminal = null;
 let inputPrompt = null;
@@ -217,6 +217,25 @@ function start() {
 
         await new Promise((resolve, reject) => {
             const handleKeydown = (event) => {
+                if (event.ctrlKey) {
+                    if (event.key.toLowerCase() === 'c') {
+                        if (event.shiftKey) return;
+                        event.preventDefault();
+                        output.print(document.getElementById('preprompt').textContent)
+                        output.print(inputPrompt.value)
+                        output.print('^C\n');
+                        inputPrompt.value = '';
+                        return;
+                    }
+
+                    if (event.key.toLowerCase() === 'l') {
+                        event.preventDefault();
+                        resolve()
+                        terminal.innerHTML = '';
+                        return;
+                    }
+                }
+
                 if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
                     event.preventDefault();
 
@@ -268,6 +287,8 @@ function start() {
 
                     inputPrompt.value = matches[0];
                 }
+
+                
             };
 
             inputPrompt.addEventListener('keydown', handleKeydown);

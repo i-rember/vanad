@@ -185,7 +185,7 @@ const commands = {
 let commandHistory = [];
 let historyIndex = 0;
 
-function handleCmd(value) {
+async function handleCmd(value) {
     const args = value.match(/"[^"]*"|'[^']*'|[^\s]+/g)?.map((arg) => arg.replace(/^['"]|['"]$/g, '')) ?? [];
     const [name, ...params] = args;
 
@@ -203,7 +203,7 @@ function handleCmd(value) {
         return;
     }
 
-    command.run(...params);
+    await command.run(...params);
 }
 
 function start() {
@@ -225,12 +225,14 @@ function start() {
                         output.print(inputPrompt.value)
                         output.print('^C\n');
                         inputPrompt.value = '';
+                        inputPrompt.removeEventListener('keydown', handleKeydown);
                         return;
                     }
 
                     if (event.key.toLowerCase() === 'l') {
                         event.preventDefault();
-                        resolve()
+                        inputPrompt.removeEventListener('keydown', handleKeydown);
+                        resolve();
                         terminal.innerHTML = '';
                         return;
                     }
@@ -287,8 +289,6 @@ function start() {
 
                     inputPrompt.value = matches[0];
                 }
-
-                
             };
 
             inputPrompt.addEventListener('keydown', handleKeydown);

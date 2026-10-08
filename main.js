@@ -1,9 +1,9 @@
-const VERSION = "0.2.2.2.2";
+const VERSION = "0.2.3";
 
 let terminal = null;
 let inputPrompt = null;
 
-function ensureTerminal() {
+function cacheElements() {
     if (!terminal) {
         terminal = document.getElementById('console');
     }
@@ -13,7 +13,7 @@ function ensureTerminal() {
     }
 }
 
-ensureTerminal();
+cacheElements();
 
 function escapeHtml(value) {
     return String(value)
@@ -48,19 +48,20 @@ function safeText(value) {
 }
 
 const output = {
-    raw: (html) => {
-        ensureTerminal();
+    html: (html) => {
+        // trusted html only. NEVER pass user input here.
+        cacheElements();
         terminal.insertAdjacentHTML('beforeend', html);
     },
     print: (text, color=null) => {
         if (color) {
-            output.raw(`<${color}>${escapeHtml(text)}</${color}>`);
+            output.html(`<${color}>${escapeHtml(text)}</${color}>`);
         } else {
-            output.raw(escapeHtml(text));
+            output.html(escapeHtml(text));
         }
     },
     format: (text) => {
-        output.raw(safeText(text));
+        output.html(safeText(text));
     }
 }
 
@@ -160,11 +161,11 @@ const commands = {
             output.print(`-= Vanade Terminal ver. ${VERSION} =-\n`);
             output.print(`A terminal app that runs in your browser\n\n`);
             output.print(`Copyright (c) 2026 i rember; MIT License\n`);
-            output.raw(`<a href="https://github.com/i-rember/vanade">This app is open-source</a>`);
+            output.html(`<a href="https://github.com/i-rember/vanade">This app is open-source</a>`);
         }
     },
     random: {
-        desc: "Generate a random number between two values",
+        desc: "Generate a random integer between two values",
         params: [
             { name: "min", desc: "Minimum value" },
             { name: "max", desc: "Maximum value" }
@@ -172,6 +173,10 @@ const commands = {
         run: async (min = 0, max = 100) => {
             const a = Number(min);
             const b = Number(max);
+            if (a > b) {
+                output.print("Minimum cannot be greater than maximum", "tertiary");
+                return;
+            }
             if (isNaN(a) || isNaN(b)) {
                 output.print(`Please provide valid numeric values`, 'tertiary');
                 return;
@@ -193,10 +198,12 @@ async function handleCmd(value) {
         return;
     }
 
+    name = name.toLowerCase()
+
     commandHistory.push(value);
     historyIndex = commandHistory.length;
 
-    const command = commands[name];
+    const command = Object.hasOwn(commands, name) ? commands[name] : null;
 
     if (!command) {
         output.print(`${name} is not a command`, 'tertiary');
@@ -207,7 +214,7 @@ async function handleCmd(value) {
 }
 
 function start() {
-    ensureTerminal();
+    cacheElements();
 
     output.print(`-= Vanade Terminal ver. ${VERSION} =-\n`);
     output.print(`Type 'help' for a list of available commands.\n\n`);

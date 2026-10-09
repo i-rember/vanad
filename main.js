@@ -1,4 +1,4 @@
-const VERSION = "0.2.3";
+const VERSION = "0.2.3.1";
 
 let terminal = null;
 let inputPrompt = null;
@@ -192,7 +192,7 @@ let historyIndex = 0;
 
 async function handleCmd(value) {
     const args = value.match(/"[^"]*"|'[^']*'|[^\s]+/g)?.map((arg) => arg.replace(/^['"]|['"]$/g, '')) ?? [];
-    const [name, ...params] = args;
+    let [name, ...params] = args;
 
     if (!name) {
         return;
